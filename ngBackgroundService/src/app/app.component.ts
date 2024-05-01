@@ -26,24 +26,35 @@ export class AppComponent {
   baseUrl = "https://localhost:7056/";
 
   // Ajouter une variable nbWins
+  nbWins:number = 0;
 
   private hubConnection?: signalR.HubConnection
 
   isConnected = false;
   nbClicks = 0;
   // TODO: Ajouter 3 variables: Le multiplier, le multiplierCost, mais également le multiplierIntialCost pour remettre à jour multiplierCost après chaque fin de round (ou sinon on peut passer l'information dans l'appel qui vient du Hub!)
+  multiplier = 1;
+  multiplierCost = 0;
+  multiplierInitialCost = 10;
 
   constructor(public account:AccountService){
   }
 
   Increment() {
     //TODO: Augmenter le nbClicks par la valeur du multiplicateur
-    this.nbClicks += 1;
+    this.nbClicks += this.multiplier;
     this.hubConnection!.invoke('Increment')
   }
 
   BuyMultiplier() {
     // TODO: Implémenter la méthode qui permet d'acheter un niveau de multiplier (Appel au Hub!)
+    if(this.nbClicks >= this.multiplierInitialCost){
+      this.hubConnection!.invoke('BuyMultiplier');
+      this.multiplierCost = this.multiplier * this.multiplierInitialCost;
+      this.nbClicks -= this.multiplierCost;
+      this.multiplier *=2;
+    }
+
   }
 
   async register(){
@@ -87,13 +98,22 @@ export class AppComponent {
     this.hubConnection.on('GameInfo', (data:GameInfo) => {
       this.isConnected = true;
       // TODO: Mettre à jour les variables pour le coût du multiplier et le nbWins
+      this.multiplierCost = data.multiplierCost;
+      this.nbWins = data.nbWins;
     });
 
     this.hubConnection.on('EndRound', (data:RoundResult) => {
       this.nbClicks = 0;
       // TODO: Reset du multiplierCost et le multiplier
+      this.multiplier = 1;
+      this.multiplierCost = this.multiplierInitialCost;
 
       // TODO: Si le joueur a gagné, on augmene nbWins
+      for(let players in data.winners){
+        if(players == this.account.username){
+          this.nbWins ++;
+        }
+      }
 
       if(data.nbClicks > 0){
         let phrase = " a gagné avec ";

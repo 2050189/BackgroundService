@@ -7,6 +7,8 @@ namespace BackgroundService.Models
         public int Id { get; set; }
         public string UserId { get; set; }
         public IdentityUser User { get; set; }
-        // TODO: Ajouter une propriété NbWins
+        // TODO: Ajouter une propriété NbWins -- DONE
+
+        public int NbWins { get; set; }
     }
 }
